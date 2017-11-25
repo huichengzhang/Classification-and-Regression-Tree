@@ -7,7 +7,7 @@
 *	Email: lingboz2015@gmail.com
 * 
 **********************************************************************/
-//modified from source codes from:
+//built on source codes from:
 /*********************************************************************
 * Classification and Regression Tree (CART) V1.0
 * Implemented by heshenghuan (heshenghuan999@163.com)
@@ -26,79 +26,107 @@ CART::~CART()
 {
 }
 
-void CART::save_model(string model_file)
+//void CART::save_model(string model_file)
+//{
+//	cout<<"Saving model..."<<endl;
+//	ofstream fout(model_file.c_str());
+//	fout<<feat_set_size<<" "<<class_set_size<<endl;
+//	for(int j = 0;j < tree.size(); j++)
+//	{
+//		fout<<tree[j].leaf<<" "<<tree[j].left_child<<" "
+//			<<tree[j].right_child<<" "<<tree[j].id<<" "
+//			<<tree[j].j<<" "<<tree[j].s<<" "<<tree[j].c<<endl;
+//	}
+//	fout.close();
+//}
+//
+//void CART::load_model(string model_file)
+//{
+//	cout<<"Loading model..."<<endl;
+//	tree.clear();
+//	tree_id = 0;
+//	ifstream fin(model_file.c_str());
+//	if(!fin)
+//	{
+//		cerr<<"Error opening file: "<<model_file<<endl;
+//	}
+//	string line_str;
+//	getline(fin, line_str);
+//	vector<string> first_line_vec = string_split(line_str, " ");
+//	feat_set_size = (int)atoi(first_line_vec[0].c_str());
+//	class_set_size = (int)atoi(first_line_vec[1].c_str());
+//	while(getline(fin, line_str))
+//	{
+//		vector<string> line_vec = string_split(line_str, " ");
+//		if(line_vec.size() != 7)
+//		{
+//			cerr<<"Error reading model data: "<<line_str<<endl;
+//			exit(0);
+//		}
+//		node p = node();
+//		p.leaf = (int)atoi(line_vec[0].c_str());
+//		p.left_child = (int)atoi(line_vec[1].c_str());
+//		p.right_child = (int)atoi(line_vec[2].c_str());
+//		p.id = (int)atoi(line_vec[3].c_str());
+//		p.j = (int)atoi(line_vec[4].c_str());
+//		p.s = (float)atof(line_vec[5].c_str());
+//		p.c = (float)atof(line_vec[6].c_str());
+//		tree.push_back(p);
+//	}
+//	fin.close();
+//	tree_id = tree.size();
+//}
+//
+//void CART::load_training_data(string training_file)
+//{
+//	cout<<"Loading training data..."<<endl;
+//	read_samp_file(training_file, samp_feat_vec, samp_class_vec);
+//	feat_set_size = 0;
+//	class_set_size = 0;
+//	for(size_t i = 0; i < samp_class_vec.size(); i++)
+//	{
+//		if(samp_class_vec[i] > class_set_size)
+//			class_set_size = samp_class_vec[i];
+//		if(samp_feat_vec[i].id_vec.back() > feat_set_size)
+//			feat_set_size = samp_feat_vec[i].id_vec.back();
+//	}
+//}
+
+void CART:: create_classification_tree()
 {
-	cout<<"Saving model..."<<endl;
-	ofstream fout(model_file.c_str());
-	fout<<feat_set_size<<" "<<class_set_size<<endl;
-	for(int j = 0;j < tree.size(); j++)
-	{
-		fout<<tree[j].leaf<<" "<<tree[j].left_child<<" "
-			<<tree[j].right_child<<" "<<tree[j].id<<" "
-			<<tree[j].j<<" "<<tree[j].s<<" "<<tree[j].c<<endl;
-	}
-	fout.close();
+	
 }
 
-void CART::load_model(string model_file)
+void CART:: create_regression_tree()
 {
-	cout<<"Loading model..."<<endl;
-	tree.clear();
-	tree_id = 0;
-	ifstream fin(model_file.c_str());
-	if(!fin)
-	{
-		cerr<<"Error opening file: "<<model_file<<endl;
-	}
-	string line_str;
-	getline(fin, line_str);
-	vector<string> first_line_vec = string_split(line_str, " ");
-	feat_set_size = (int)atoi(first_line_vec[0].c_str());
-	class_set_size = (int)atoi(first_line_vec[1].c_str());
-	while(getline(fin, line_str))
-	{
-		vector<string> line_vec = string_split(line_str, " ");
-		if(line_vec.size() != 7)
-		{
-			cerr<<"Error reading model data: "<<line_str<<endl;
-			exit(0);
-		}
-		node p = node();
-		p.leaf = (int)atoi(line_vec[0].c_str());
-		p.left_child = (int)atoi(line_vec[1].c_str());
-		p.right_child = (int)atoi(line_vec[2].c_str());
-		p.id = (int)atoi(line_vec[3].c_str());
-		p.j = (int)atoi(line_vec[4].c_str());
-		p.s = (float)atof(line_vec[5].c_str());
-		p.c = (float)atof(line_vec[6].c_str());
-		tree.push_back(p);
-	}
-	fin.close();
-	tree_id = tree.size();
+
 }
 
-void CART::load_training_data(string training_file)
-{
-	cout<<"Loading training data..."<<endl;
-	read_samp_file(training_file, samp_feat_vec, samp_class_vec);
-	feat_set_size = 0;
-	class_set_size = 0;
-	for(size_t i = 0; i < samp_class_vec.size(); i++)
-	{
-		if(samp_class_vec[i] > class_set_size)
-			class_set_size = samp_class_vec[i];
-		if(samp_feat_vec[i].id_vec.back() > feat_set_size)
-			feat_set_size = samp_feat_vec[i].id_vec.back();
-	}
-}
+//void pruning_classification()
+//{
+//}
 
-void CART::learn(int tree_type)
-{
-	if(tree_type == 1)
-		create_classification_tree();
-	else
-		create_regression_tree();
-}
+//void pruning_regression_tree()
+//{
+
+//}
+
+//vector<float> predict_vari_regression(sparse_feat& samp_feat)
+//{
+
+//}
+
+//vector<float> predict_class_classification(sparse_feat& samp_feat)
+//{
+//}
+
+//void CART::learn(int tree_type)
+//{
+//	if(tree_type == 1)
+//		create_classification_tree();
+//	else
+//		create_regression_tree();
+//}
 
 void CART::read_samp_file(string samp_file, vector<sparse_feat> &samp_feat_vec, vector<float> &samp_class_vec)
 {
@@ -138,7 +166,7 @@ void CART::read_samp_file(string samp_file, vector<sparse_feat> &samp_feat_vec, 
 
 vector<string> CART::string_split(string terms_str, string splitting_tag)
 {
-	vector<string> feat_vec;
+    vector<string> feat_vec;
     size_t term_beg_pos = 0;
     size_t term_end_pos = 0;
     while ((term_end_pos = terms_str.find_first_of(splitting_tag, term_beg_pos)) != string::npos) {
@@ -154,20 +182,20 @@ vector<string> CART::string_split(string terms_str, string splitting_tag)
     }
     return feat_vec;
 }
-
-float CART::calc_acc(vector<float> &test_class_vec, vector<float> &pred_class_vec)
-{
-    size_t len = test_class_vec.size();
-    if (len != pred_class_vec.size())
-	{
-        cerr << "Error: two vectors should have the same lenght." << endl;
-        exit(0);
-    }
-    int err_num = 0;
-    for (size_t id = 0; id != len; id++)
-	{
-        if (test_class_vec[id] != pred_class_vec[id])
-            err_num++;
-    }
-    return 1 - ((float)err_num) / len;
-}
+//
+//float CART::calc_acc(vector<float> &test_class_vec, vector<float> &pred_class_vec)
+//{
+//    size_t len = test_class_vec.size();
+//    if (len != pred_class_vec.size())
+//	{
+//        cerr << "Error: two vectors should have the same length." << endl;
+//        exit(0);
+//    }
+//    int err_num = 0;
+//    for (size_t id = 0; id != len; id++)
+//	{
+//        if (test_class_vec[id] != pred_class_vec[id])
+//            err_num++;
+//    }
+//    return 1 - ((float)err_num) / len;
+//}
