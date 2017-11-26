@@ -8,4 +8,17 @@
 * 
 **********************************************************************/
 
+#include"CART.h"
+
+
+
+using namespace std;
+
+int main(){
+	CART tree;
+	tree.Read_sampleFile("data.txt");
+	return 0;
+};
+
+
 

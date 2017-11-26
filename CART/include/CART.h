@@ -11,12 +11,14 @@
 
 #include<iostream>
 #include<fstream>
+#include<sstream>
 #include<algorithm>
 #include<vector>
 #include<unordered_map>
 #include<unordered_set>
 #include<string>
 #include<math.h>
+#include<cstdlib>
 
 #define version        "V1.0"
 #define version_date   "2017-11-25"
@@ -33,17 +35,17 @@ struct CART_data
        unordered_map<int,int> classCount; 
 };
 
-class CART()
+class CART
 {
 protected:
-	node* root;
+//	node* root;
 	CART_data data;	
 //      CART settings:
         const float TEST_RATIO=0.2;
 public:
 	CART();
 	~CART();
-	void Read_sampleFile(string sampleFile,CART_data& data);
+	int Read_sampleFile(string sampleFile);
 
 //	void Learn();
 //	void Evaluate();

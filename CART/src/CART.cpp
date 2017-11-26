@@ -9,16 +9,24 @@
 **********************************************************************/
 #include "CART.h"
 
+CART::CART()
+{
 
+}
 
+CART::~CART()
+{
 
+}
 
-void CART :: Read_sampleFile(string sampleFile,CART_data& data)
+int CART :: Read_sampleFile(string sampleFile)
 {
 /******************************************
 *  Input:
-*     1. Sample file; 
-*     2. CART data;
+*     explicit:
+*        1. Sample file; 
+*     implicit:
+*        2. CART data; 
 *  Output:
 *     1. void;   
 *  Function:
@@ -26,25 +34,29 @@ void CART :: Read_sampleFile(string sampleFile,CART_data& data)
 *     Update data
 *     trainData, testData, classSet(classification tree), featureSet...
 *     classCount(classification tree);
-******************************************/
-	
+******************************************/	
 	ifstream fin(sampleFile.c_str());
-	if(!fin)
-	{
+	if(!fin){
 		cerr<<"Error opening file: "<<sampleFile<<endl;
-		return 0;
+		return 1;
 	}else{
 		string lineStr;
-		while (getlien(fin,lineStr))
-		{
-			if()
-			{
-
-			}else
-			}	
+		while (getline(fin,lineStr)){
+			istringstream lineStream(lineStr);
+			string field;
+			vector<float> lineVector;
+			while(getline(lineStream,field,',')){
+				float fieldValue=stof(field);
+				//
+				lineVector.push_back(fieldValue);
+				lineStream>>ws;
+			}
+			if(rand()%10<TEST_RATIO*10){
+				data.testData.push_back(lineVector);	
+			}else{
+				data.trainData.push_back(lineVector);
+			}
 		}
+		return 0;
 	}	
-
-
-
 }
