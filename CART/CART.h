@@ -25,37 +25,8 @@
 
 using namespace std;
 
-class Node{
-	
-	Node* left;
-	Node* right;
-	int featureIndex;
-	float splitValue;
-	float classResult;
-	//default constructor
-	Node(){
-		left=nullptr;
-		right=nullptr;
-		featureIndex=-1;
-		splitValue=NULL;
-		classResult=NULL;	
-	}
-	// destructor
-	~Node(){
-		if (left!=nullptr){
-			delete left;
-			left=nullptr;
-		}
-		if (right!=nullptr){
-			delete right;
-			right=nullptr;
-		}
-	}
-};
-
-
-struct CART_data{
-	
+struct CART_data
+{
        vector< vector<float> > trainData;
        vector< vector<float> > testData;
        int featureNum;
@@ -64,22 +35,23 @@ struct CART_data{
 //       unordered_map<int,int> classCount; 
 };
 
-class CART{
-	
+class CART
+{
 protected:
-	Node* root;
+//	node* root;
 	CART_data data;	
 //      CART settings:
         const float TEST_RATIO=0.2;
 public:
 	CART();
 	~CART();
-	void Learn(string sampleFile,int flag);
-//	void Evaluate();
-//	float Predict();
-	
+	int Read_sampleFile(string sampleFile);
 protected:
 	void OutputData(CART_data& data);
-	int Read_sampleFile(string sampleFile,CART_data& data);
+
+
+//	void Learn();
+//	void Evaluate();
+//	float Predict();
 };
 
