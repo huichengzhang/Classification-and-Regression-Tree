@@ -26,19 +26,27 @@
 using namespace std;
 
 class Node{
+
 	
+public:	
 	Node* left;
 	Node* right;
+	int depth;
 	int featureIndex;
 	float splitValue;
 	float classResult;
+	vector<int> indexArray;
 	//default constructor
 	Node(){
 		left=nullptr;
 		right=nullptr;
+		depth=0;
 		featureIndex=-1;
-		splitValue=NULL;
-		classResult=NULL;	
+		splitValue=0;
+		classResult=0;
+	}
+	Node(int d){
+		depth=d;
 	}
 	// destructor
 	~Node(){
@@ -59,27 +67,50 @@ struct CART_data{
        vector< vector<float> > trainData;
        vector< vector<float> > testData;
        int featureNum;
+       int trainDataSize;
+       int testDataSize;
 //      members for the classification tree
 //       unordered_set<int> classSet;
 //       unordered_map<int,int> classCount; 
 };
 
+struct CART_settings{
+	int treeType;   // treeType 0: classification tree
+	                //          1: regression tree
+	float test_ratio;
+	int maxDepth;
+	int minCount;
+	CART_settings(){
+		treeType=0;
+		test_ratio=0.2;
+		maxDepth=10;
+		minCount=5;
+	}
+};
+
 class CART{
 	
 protected:
-	Node* root;
+	Node* root=new Node(0);
+// CART data
 	CART_data data;	
-//      CART settings:
-        const float TEST_RATIO=0.2;
+// CART settings
+	CART_settings settings;
+	
 public:
 	CART();
 	~CART();
-	void Learn(string sampleFile,int flag);
+	void Set_configurations();
+	int Read_sampleFile(string sampleFile);
+	void Learn();
 //	void Evaluate();
 //	float Predict();
 	
 protected:
 	void OutputData(CART_data& data);
-	int Read_sampleFile(string sampleFile,CART_data& data);
+	int BuildTree(Node* node,CART_data& data);
+	bool StopCriterion(Node* node);
+	void Calculate_classResult(Node* node,CART_data& data,int treeType);
+	void Split(Node* node,CART_data& data);
 };
 
