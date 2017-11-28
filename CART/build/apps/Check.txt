@@ -1,6 +1,6 @@
-Number of features: 6
-
-Size of the trainData: 5
+Number of features: 6;
+Size of the trainData: 5;
+Size of the testData: 2
 
 85,92,45,27,31,0,1,
 85,64,59,32,23,0,2,

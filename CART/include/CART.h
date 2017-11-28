@@ -19,15 +19,14 @@
 #include<string>
 #include<math.h>
 #include<cstdlib>
+#include<utility>
 
 #define version        "V1.0"
 #define version_date   "2017-11-25"
 
 using namespace std;
 
-class Node{
-
-	
+class Node{	
 public:	
 	Node* left;
 	Node* right;
@@ -47,18 +46,14 @@ public:
 	}
 	Node(int d){
 		depth=d;
+		left=nullptr;
+		right=nullptr;
+		depth=0;
+		featureIndex=-1;
+		splitValue=0;
+		classResult=0;
 	}
 	// destructor
-	~Node(){
-		if (left!=nullptr){
-			delete left;
-			left=nullptr;
-		}
-		if (right!=nullptr){
-			delete right;
-			right=nullptr;
-		}
-	}
 };
 
 
@@ -80,11 +75,13 @@ struct CART_settings{
 	float test_ratio;
 	int maxDepth;
 	int minCount;
+	int featSplitNum;
 	CART_settings(){
 		treeType=0;
 		test_ratio=0.2;
 		maxDepth=10;
-		minCount=5;
+		minCount=1;
+		featSplitNum=10;
 	}
 };
 
@@ -100,17 +97,20 @@ protected:
 public:
 	CART();
 	~CART();
-	void Set_configurations();
+//	void Set_configurations();
 	int Read_sampleFile(string sampleFile);
 	void Learn();
 //	void Evaluate();
 //	float Predict();
 	
 protected:
-	void OutputData(CART_data& data);
-	int BuildTree(Node* node,CART_data& data);
-	bool StopCriterion(Node* node);
-	void Calculate_classResult(Node* node,CART_data& data,int treeType);
-	void Split(Node* node,CART_data& data);
+	void  OutputData(CART_data& data);
+	int   BuildTree(Node* node,CART_data& data);
+	bool  StopCriterion(Node* node,CART_data& data);
+	void  Calculate_classResult(Node* node,CART_data& data,int treeType);
+	void  Split(Node* node,CART_data& data);
+	float Calculate_GiniIndex(int fIndex,float splitValue,Node* node,CART_data& data);
+	int   deleteTree(Node* node);
+
 };
 

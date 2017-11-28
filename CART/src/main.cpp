@@ -17,6 +17,7 @@ using namespace std;
 int main(){
 	CART tree;
 	tree.Read_sampleFile("data.txt");
+	tree.Learn();
 	return 0;
 };
 
