@@ -59,9 +59,8 @@ void CART :: Learn(){
 *     Build the decision tree 
 *******************************************/
 	//Build and initialization boolIndexArray
-	//Update indexArray
-	for (int i=0;i<data.trainDataSize;i++)
-		root->indexArray.push_back(i);
+	//Update dataSet
+	root->dataSet=data.trainData;
 	BuildTree(root,data);
 }
 
@@ -80,23 +79,25 @@ int CART :: BuildTree(Node* node,CART_data& data){
 		Calculate_classResult(node,data,settings.treeType);
 		return 0;
 	}else{
-		Split(node,data);
-
-		BuildTree(node->left,data);
-		BuildTree(node->right,data);
+		int flag=Split(node,data);
+		if(!flag){
+			BuildTree(node->left,data);
+			BuildTree(node->right,data);
+		}
 	}
 	return 0;
 }
 
 
-void CART :: Split(Node* node,CART_data& data){
+int CART :: Split(Node* node,CART_data& data){
 /******************************************
 *  Input:
 *     explicit:
 *     	1. node;
 *     	2. data;
 *  Output:
-*     void;
+*     	1. Stop splitting, skip building node.left and node.right, return;
+*     	0. Continue splitting;
 *  Function:
 *  	1. Split dataSet according to the impurity function
 *  		classification tree: Gini index;
@@ -105,80 +106,75 @@ void CART :: Split(Node* node,CART_data& data){
 *  		1. Update featureIndex, splitValue;
 *  		2. Generate left and right nodes;	
 *******************************************/
-	float splitValue;
-	float Gini_index_min=1,Gini_index_tmp;
+	int classCount;
 	
-	for(int fIndex=0;fIndex<data.featureNum;fIndex++){	
-		float minEle,maxEle;
-		minEle=maxEle=data.trainData[node->indexArray[0]][fIndex];
-		for (auto ele:node->indexArray){
-			if (minEle>data.trainData[ele][fIndex])
-				minEle=data.trainData[ele][fIndex];
-			if (maxEle<data.trainData[ele][fIndex])
-				maxEle=data.trainData[ele][fIndex];
-		}
-		for(int j=0;j<=settings.featSplitNum;j++){
-			splitValue=minEle+j*(maxEle-minEle)/settings.featSplitNum;
-			if (settings.treeType==0){
-				Gini_index_tmp=Calculate_GiniIndex(fIndex,splitValue,node,data);
+	for(int fIndex=0;fIndex<data.featureNum;fIndex++){
+		float splitValue;
+		float Gini_index_min=1,Gini_index_tmp;
+	
+		sort(node->dataSet.begin(),node->dataSet.end(),
+		     [fIndex](vector<float> rowi,vector<float> rowj){
+		     return rowi[fIndex]<rowj[fIndex];
+		     }
+		);
+		
+		if (settings.treeType==0){
+			vector< vector<float> >::iterator it;
+			unordered_map<float,int> classSet_left,classSet_right;
+			for (auto ele:node->dataSet){
+				classSet_right[ele.back()]++;
+			}	
+			int count=1;		
+			for (it=node->dataSet.begin();it!=node->dataSet.end();it++,count++){
+				splitValue=(*it)[fIndex];
+				// Calculate GiniIndex
+				float PL,PR,scoreL,scoreR;
+				PL=(float)count/float(node->dataSet.size());
+				PR=1.0-PL;
+				classSet_left[(*it).back()]++;
+				classSet_right[(*it).back()]--;
+				scoreL=0.0;
+				for (auto ele:classSet_left){
+					scoreL+=ele.second*ele.second;
+				}
+				scoreL=scoreL/count/count;
+				scoreR=0.0;
+				for (auto ele:classSet_right){
+					scoreR+=ele.second*ele.second;
+				}
+				if (count==node->dataSet.size()){
+					scoreR=0.0;
+				}else{
+					scoreR=scoreR/(node->dataSet.size()-count)/(node->dataSet.size()-count);
+				}
+				Gini_index_tmp=PL*(1.0-scoreL)+PR*(1.0-scoreR);
+				//
 				if(Gini_index_tmp<Gini_index_min){
 					Gini_index_min=Gini_index_tmp;
 					node->featureIndex=fIndex;
 					node->splitValue=splitValue;
+					classCount=count;
 				}
-			}else{
-				// for regression tree;
 			}
-		
-		}		
+
+		}else{
+			// for regression tree;
+			
+		}	
 	}
+	if (classCount==node->dataSet.size())
+		return 1;
 	node->left=new Node(node->depth+1);				
 	node->right=new Node(node->depth+1);
-	for (auto ele:node->indexArray){
-		if (data.trainData[ele][node->featureIndex]<=node->splitValue){
-			node->left->indexArray.push_back(ele);
+	for (auto ele:node->dataSet){
+		if (ele[node->featureIndex]<=node->splitValue){
+			node->left->dataSet.push_back(ele);
 		}else{
-			node->right->indexArray.push_back(ele);
+			node->right->dataSet.push_back(ele);
 		}
 	}	
-}
-
-float CART :: Calculate_GiniIndex(int fIndex,float splitValue,Node* node,CART_data& data){
-/******************************************
-*  Input:
-*     explicit:
-*     	1. fIndex;
-*     	2. splitValue;
-*     	3. node;
-*     	4. data;
-*  Output:
-*  	1. Gini_index_tmp;
-*  Function:
-*	Calculate the GiniIndex of feature fIndex based on the splitValue
-*******************************************/
-	unordered_map<float,int> groupLeft,groupRight;
-
-	for (auto ele:node->indexArray){
-		if (data.trainData[ele][fIndex]<=splitValue){
-			groupLeft[data.trainData[ele].back()]++;
-		}else{
-			groupRight[data.trainData[ele].back()]++;
-
-		}
-	}
-	float PL,PR;
-	float pl=0,pr=0;
-	PL=groupLeft.size()/node->indexArray.size();
-	PR=groupRight.size()/node->indexArray.size();
-	for (auto ele:groupLeft){
-		pl+=ele.second*ele.second;
-	}
-	pl=pl/groupLeft.size()/groupLeft.size();
-	for (auto ele:groupRight){
-		pr+=ele.second*ele.second;
-	}
-	pr=pr/groupRight.size()/groupRight.size();
-	return PL*(1-pl)+PR*(1-pr);	
+	node->dataSet.clear();
+	return 0;
 }
 
 bool CART :: StopCriterion(Node* node,CART_data& data){
@@ -196,17 +192,17 @@ bool CART :: StopCriterion(Node* node,CART_data& data){
 *  		False: continue
 *******************************************/
 	// if class pool is homogeneous
-	unordered_map<float,int> group;
-	for (auto ele:node->indexArray){
-		group[data.trainData[ele].back()]++;
+	unordered_map<float,int> classTable;
+	for (auto ele:node->dataSet){
+		classTable[ele.back()]++;
 	}
-	if (group.size()==1)
+	if (classTable.size()==1)
 		return true;
 	//Criterion I: node depth
 	if (node->depth>settings.maxDepth)
 		return true;
 	//Criterion II: class count
-	if (node->indexArray.size()<=settings.minCount)
+	if (node->dataSet.size()<=settings.minCount)
 		return true;
 	return false;
 }
@@ -224,13 +220,13 @@ void CART :: Calculate_classResult(Node* node,CART_data& data,int treeType){
 *  	Calculate the leaf class result based on the treeType	
 **************************************************************/
 	if (treeType==0){
-		unordered_map<float,int> hashtable;
+		unordered_map<float,int> classTable;
 		int count=0;
-		for (auto ele:node->indexArray){
-			hashtable[data.trainData[ele].back()]++;
-			if (count<hashtable[data.trainData[ele].back()]) {
-				count=hashtable[data.trainData[ele].back()];
-				node->classResult=data.trainData[ele].back();
+		for (auto ele:node->dataSet){
+			classTable[ele.back()]++;
+			if (count<classTable[ele.back()]) {
+				count=classTable[ele.back()];
+				node->classResult=ele.back();
 			}		
 		}	
 		
@@ -238,8 +234,6 @@ void CART :: Calculate_classResult(Node* node,CART_data& data,int treeType){
 		// for regression tree;
 	}
 }
-
-
 
 int CART :: Read_sampleFile(string sampleFile)
 {

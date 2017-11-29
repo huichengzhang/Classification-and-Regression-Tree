@@ -34,7 +34,7 @@ public:
 	int featureIndex;
 	float splitValue;
 	float classResult;
-	vector<int> indexArray;
+	vector< vector<float> > dataSet;
 	//default constructor
 	Node(){
 		left=nullptr;
@@ -64,9 +64,6 @@ struct CART_data{
        int featureNum;
        int trainDataSize;
        int testDataSize;
-//      members for the classification tree
-//       unordered_set<int> classSet;
-//       unordered_map<int,int> classCount; 
 };
 
 struct CART_settings{
@@ -75,13 +72,11 @@ struct CART_settings{
 	float test_ratio;
 	int maxDepth;
 	int minCount;
-	int featSplitNum;
 	CART_settings(){
 		treeType=0;
-		test_ratio=0.2;
+		test_ratio=-1;
 		maxDepth=10;
-		minCount=1;
-		featSplitNum=10;
+		minCount=2;
 	}
 };
 
@@ -108,8 +103,7 @@ protected:
 	int   BuildTree(Node* node,CART_data& data);
 	bool  StopCriterion(Node* node,CART_data& data);
 	void  Calculate_classResult(Node* node,CART_data& data,int treeType);
-	void  Split(Node* node,CART_data& data);
-	float Calculate_GiniIndex(int fIndex,float splitValue,Node* node,CART_data& data);
+	int  Split(Node* node,CART_data& data);
 	int   deleteTree(Node* node);
 
 };
