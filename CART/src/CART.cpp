@@ -17,11 +17,11 @@ CART :: CART()
 CART :: ~CART()
 {
 //delete tree
-	deleteTree(root);
+	DeleteTree(root);
 	cout<<endl;
 }
 
-int CART :: deleteTree(Node* node){
+int CART :: DeleteTree(Node* node){
 /******************************************
 *  Input:
 *     explicit:
@@ -34,12 +34,12 @@ int CART :: deleteTree(Node* node){
     if (node == nullptr) 
 	    return 0;
  
-    deleteTree(node->left);
-    deleteTree(node->right);   
+    DeleteTree(node->left);
+    DeleteTree(node->right);   
 //
-    cout<<"Deleting node with"<<endl;
-    cout<<"      1. Feature Index:  "<<node->featureIndex<<endl;
-    cout<<"      2. Split Value:    "<<node->splitValue<<endl;
+//    cout<<"Deleting node with"<<endl;
+//    cout<<"      1. Feature Index:  "<<node->featureIndex<<endl;
+//    cout<<"      2. Split Value:    "<<node->splitValue<<endl;
     delete node;
     node=nullptr;
 
@@ -60,41 +60,66 @@ void CART :: Learn(){
 *******************************************/
 	//Build and initialization boolIndexArray
 	//Update dataSet
+	root=new Node(0);
 	root->dataSet=data.trainData;
-	BuildTree(root,data);
+	//
+	BuildTree(root);
+	PrintTree(root);
 }
 
-int CART :: BuildTree(Node* node,CART_data& data){
+int CART :: PrintTree(Node* node){
+/******************************************
+*  Input:
+*     implicit:
+*     	1. root;
+*  Output:
+*       1. Tree is printed successfully;
+*       0. Tree is not printed successfully;
+*  Function:
+*     Print the decision tree 
+*******************************************/
+	if (node==nullptr)
+		return 0;
+	string s(node->depth,'.');
+	if (node->featureIndex!=-1){
+		printf("%s[X%d<=%5.3f]\n",s.c_str(),node->featureIndex+1,node->splitValue);
+	}else{
+		printf("%s%s",s.c_str(),"->");
+		printf("[%d]\n",int(node->classResult));	
+	}
+	PrintTree(node->left);
+	PrintTree(node->right);
+	return 0;
+}
+
+int CART :: BuildTree(Node* node){
 /******************************************
 *  Input:
 *     explicit:
 *	1. node;
-*	2. data;
 *  Output:
 *     void;
 *  Function:
 *     Build the decision tree 
 *******************************************/
-	if (StopCriterion(node,data)){
-		Calculate_classResult(node,data,settings.treeType);
+	if (StopCriterion(node)){
+		Calculate_classResult(node,settings.treeType);
 		return 0;
 	}else{
-		int flag=Split(node,data);
+		int flag=Split(node);
 		if(!flag){
-			BuildTree(node->left,data);
-			BuildTree(node->right,data);
+			BuildTree(node->left);
+			BuildTree(node->right);
 		}
 	}
 	return 0;
 }
 
-
-int CART :: Split(Node* node,CART_data& data){
+int CART :: Split(Node* node){
 /******************************************
 *  Input:
 *     explicit:
 *     	1. node;
-*     	2. data;
 *  Output:
 *     	1. Stop splitting, skip building node.left and node.right, return;
 *     	0. Continue splitting;
@@ -107,10 +132,25 @@ int CART :: Split(Node* node,CART_data& data){
 *  		2. Generate left and right nodes;	
 *******************************************/
 	int classCount;
-	
+	float Gini_index_min=1;
+	unordered_map<float,int> classSet;
+	float score;	
+//
+	for (auto ele:node->dataSet){
+		classSet[ele.back()]++;
+	}
+	for (auto ele:classSet){
+		score+=ele.second*ele.second;
+	}	
+// Return if class pool is homogeneous
+	if (classSet.size()==1){
+		Calculate_classResult(node,settings.treeType);
+		return 1;
+	}
+//	
 	for(int fIndex=0;fIndex<data.featureNum;fIndex++){
 		float splitValue;
-		float Gini_index_min=1,Gini_index_tmp;
+		float Gini_index_tmp;
 	
 		sort(node->dataSet.begin(),node->dataSet.end(),
 		     [fIndex](vector<float> rowi,vector<float> rowj){
@@ -120,34 +160,29 @@ int CART :: Split(Node* node,CART_data& data){
 		
 		if (settings.treeType==0){
 			vector< vector<float> >::iterator it;
-			unordered_map<float,int> classSet_left,classSet_right;
-			for (auto ele:node->dataSet){
-				classSet_right[ele.back()]++;
-			}	
-			int count=1;		
+			unordered_map<float,int> classSet_left,classSet_right(classSet);
+			float scoreL=0,scoreR=score;	
+			int count=1;	
 			for (it=node->dataSet.begin();it!=node->dataSet.end();it++,count++){
 				splitValue=(*it)[fIndex];
 				// Calculate GiniIndex
-				float PL,PR,scoreL,scoreR;
+				float PL,PR,GiniL,GiniR;
 				PL=(float)count/float(node->dataSet.size());
 				PR=1.0-PL;
 				classSet_left[(*it).back()]++;
 				classSet_right[(*it).back()]--;
-				scoreL=0.0;
-				for (auto ele:classSet_left){
-					scoreL+=ele.second*ele.second;
-				}
-				scoreL=scoreL/count/count;
-				scoreR=0.0;
-				for (auto ele:classSet_right){
-					scoreR+=ele.second*ele.second;
-				}
+				// Calculate scoreL and scoreR
+				scoreL+=2*classSet_left[(*it).back()]-1;
+				scoreR-=(2*classSet_right[(*it).back()]+1);
+//		
+				GiniL=PL*(1.0-scoreL/count/count);
 				if (count==node->dataSet.size()){
-					scoreR=0.0;
+					GiniR=0.0;
 				}else{
-					scoreR=scoreR/(node->dataSet.size()-count)/(node->dataSet.size()-count);
+					GiniR=PR*(1.0-scoreR/(node->dataSet.size()-count)/(node->dataSet.size()-count));
 				}
-				Gini_index_tmp=PL*(1.0-scoreL)+PR*(1.0-scoreR);
+				Gini_index_tmp=GiniL+GiniR;
+				//cout<<" X "<<splitValue<<" Gini "<<Gini_index_tmp<<endl;
 				//
 				if(Gini_index_tmp<Gini_index_min){
 					Gini_index_min=Gini_index_tmp;
@@ -158,12 +193,15 @@ int CART :: Split(Node* node,CART_data& data){
 			}
 
 		}else{
-			// for regression tree;
-			
+			// for regression tree;	
 		}	
 	}
-	if (classCount==node->dataSet.size())
+// Return if the class set could not be reduced
+	if (classCount==node->dataSet.size()){
+		Calculate_classResult(node,settings.treeType);
 		return 1;
+	}
+// Split node
 	node->left=new Node(node->depth+1);				
 	node->right=new Node(node->depth+1);
 	for (auto ele:node->dataSet){
@@ -172,48 +210,40 @@ int CART :: Split(Node* node,CART_data& data){
 		}else{
 			node->right->dataSet.push_back(ele);
 		}
-	}	
+	}
+// clear dataSet	
 	node->dataSet.clear();
 	return 0;
 }
 
-bool CART :: StopCriterion(Node* node,CART_data& data){
+bool CART :: StopCriterion(Node* node){
 /******************************************
 *  Input:
 *     explicit:
 *     	1. node;
-*     	2. data;
 *  Output:
 *  	1. boolean value: 1. true:  this is a terminal node
 *  			  2. false: this is not a terminal node
 *  Function:
-*  	Determine if whether to stop the split proces: 
+*  	Determine if whether to stop the split process: 
 *  		True:  stop
 *  		False: continue
 *******************************************/
-	// if class pool is homogeneous
-	unordered_map<float,int> classTable;
-	for (auto ele:node->dataSet){
-		classTable[ele.back()]++;
-	}
-	if (classTable.size()==1)
+	//Criterion II: node depth
+	if (node->depth>=settings.maxDepth)
 		return true;
-	//Criterion I: node depth
-	if (node->depth>settings.maxDepth)
-		return true;
-	//Criterion II: class count
+	//Criterion III: class count
 	if (node->dataSet.size()<=settings.minCount)
 		return true;
 	return false;
 }
 
-void CART :: Calculate_classResult(Node* node,CART_data& data,int treeType){
+void CART :: Calculate_classResult(Node* node,int treeType){
 /**************************************************************
 *  Input:
 *     explicit:
 *     	1. node;
-*     	2. data;
-*     	3. treeType;
+*     	2. treeType;
 *  Output:
 *  	void;
 *  Function:
@@ -303,13 +333,13 @@ void CART :: OutputData(CART_data& data){
 	if (fout.is_open()){
 		int output_line_num;
 		output_line_num=10<data.trainData.size()?10:data.trainData.size();
-		fout<<"Number of features: "<<data.featureNum<<";"<<endl;
-		fout<<"Size of the trainData: "<<data.trainDataSize<<";"<<endl;
+		fout<<"Number of features: "<<data.featureNum<<';'<<endl;
+		fout<<"Size of the trainData: "<<data.trainDataSize<<';'<<endl;
 		fout<<"Size of the testData: "<<data.testDataSize<<endl<<endl;
 
 		for (int i=0;i<output_line_num;i++){
 			for (auto ele:data.trainData[i]){
-				fout<<ele<<",";
+				fout<<ele<<',';
 			}
 			fout<<endl;				
 		}

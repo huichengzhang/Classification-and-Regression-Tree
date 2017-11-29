@@ -20,42 +20,12 @@
 #include<math.h>
 #include<cstdlib>
 #include<utility>
+#include"Node.h"
 
 #define version        "V1.0"
 #define version_date   "2017-11-25"
 
 using namespace std;
-
-class Node{	
-public:	
-	Node* left;
-	Node* right;
-	int depth;
-	int featureIndex;
-	float splitValue;
-	float classResult;
-	vector< vector<float> > dataSet;
-	//default constructor
-	Node(){
-		left=nullptr;
-		right=nullptr;
-		depth=0;
-		featureIndex=-1;
-		splitValue=0;
-		classResult=0;
-	}
-	Node(int d){
-		depth=d;
-		left=nullptr;
-		right=nullptr;
-		depth=0;
-		featureIndex=-1;
-		splitValue=0;
-		classResult=0;
-	}
-	// destructor
-};
-
 
 struct CART_data{
 	
@@ -75,7 +45,7 @@ struct CART_settings{
 	CART_settings(){
 		treeType=0;
 		test_ratio=-1;
-		maxDepth=10;
+		maxDepth=3;
 		minCount=2;
 	}
 };
@@ -83,7 +53,7 @@ struct CART_settings{
 class CART{
 	
 protected:
-	Node* root=new Node(0);
+	Node* root;
 // CART data
 	CART_data data;	
 // CART settings
@@ -100,11 +70,11 @@ public:
 	
 protected:
 	void  OutputData(CART_data& data);
-	int   BuildTree(Node* node,CART_data& data);
-	bool  StopCriterion(Node* node,CART_data& data);
-	void  Calculate_classResult(Node* node,CART_data& data,int treeType);
-	int  Split(Node* node,CART_data& data);
-	int   deleteTree(Node* node);
-
+	int   BuildTree(Node* node);
+	bool  StopCriterion(Node* node);
+	void  Calculate_classResult(Node* node,int treeType);
+	int   Split(Node* node);
+	int   DeleteTree(Node* node);
+	int   PrintTree(Node* node);
 };
 
