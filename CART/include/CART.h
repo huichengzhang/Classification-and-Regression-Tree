@@ -44,9 +44,9 @@ struct CART_settings{
 	int minCount;
 	CART_settings(){
 		treeType=0;
-		test_ratio=-1;
-		maxDepth=3;
-		minCount=2;
+		test_ratio=0;
+		maxDepth=40;
+		minCount=1;
 	}
 };
 
@@ -63,10 +63,11 @@ public:
 	CART();
 	~CART();
 //	void Set_configurations();
+	void Configure_Set_depth(int depth);
 	int Read_sampleFile(string sampleFile);
 	void Learn();
-//	void Evaluate();
-//	float Predict();
+	void Evaluate();
+	void Predict(vector<float>& dataRow);
 	
 protected:
 	void  OutputData(CART_data& data);
@@ -74,7 +75,7 @@ protected:
 	bool  StopCriterion(Node* node);
 	void  Calculate_classResult(Node* node,int treeType);
 	int   Split(Node* node);
-	int   DeleteTree(Node* node);
+//	int   DeleteTree(Node* node);
 	int   PrintTree(Node* node);
 };
 

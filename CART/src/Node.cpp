@@ -26,4 +26,25 @@ Node :: Node(int d){
 	splitValue=0;
 	classResult=0;
 }
+Node :: ~Node(){
+	if (left!=nullptr){
+		delete left;
+		left=nullptr;
+	}
+	if (right!=nullptr){
+		delete right;
+		right=nullptr;
+	}
+}
+
+Node :: Node(const Node& other)
+	:depth(other.depth),
+	featureIndex(other.featureIndex),
+	splitValue(other.splitValue),
+	classResult(other.classResult)
+{
+
+	
+}
+
 

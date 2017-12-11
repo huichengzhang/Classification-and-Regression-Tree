@@ -35,6 +35,10 @@ public:
 	//default constructor
 	Node();
 	Node(int d);
-	// destructor
+	~Node();
+	// copy constructor
+	Node(const Node& other);
+	
+	
 };
 

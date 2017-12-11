@@ -18,6 +18,7 @@ int main(){
 	CART tree;
 	tree.Read_sampleFile("data.txt");
 	tree.Learn();
+	tree.Evaluate();
 	return 0;
 };
 

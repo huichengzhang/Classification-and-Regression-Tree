@@ -17,11 +17,12 @@ CART :: CART()
 CART :: ~CART()
 {
 //delete tree
-	DeleteTree(root);
-	cout<<endl;
+//	DeleteTree(root);
+	delete root;
+	root=nullptr;
 }
 
-int CART :: DeleteTree(Node* node){
+//int CART :: DeleteTree(Node* node){
 /******************************************
 *  Input:
 *     explicit:
@@ -31,20 +32,19 @@ int CART :: DeleteTree(Node* node){
 *  Function:
 *     Delete the decision tree 
 *******************************************/
-    if (node == nullptr) 
-	    return 0;
- 
-    DeleteTree(node->left);
-    DeleteTree(node->right);   
+//    if (node == nullptr) 
+//	    return 0;
+// 
+//    DeleteTree(node->left);
+//    DeleteTree(node->right);   
 //
 //    cout<<"Deleting node with"<<endl;
-//    cout<<"      1. Feature Index:  "<<node->featureIndex<<endl;
-//    cout<<"      2. Split Value:    "<<node->splitValue<<endl;
-    delete node;
-    node=nullptr;
+//    cout<<"      1. depth:  "<<node->depth<<endl;
+//    delete node;
+//    node=nullptr;
 
-    return 0;
-} 
+//  return 0;
+//} 
 
 
 void CART :: Learn(){
@@ -66,6 +66,77 @@ void CART :: Learn(){
 	BuildTree(root);
 	PrintTree(root);
 }
+
+void CART :: Evaluate(){
+/******************************************
+*  Input:
+*     implicit:
+*     	1. data;
+*     	2. root;
+*  Output:
+*     void;
+*  Function:
+*     cross-validation;
+*******************************************/
+	int count=0;
+	for (auto dataRow:data.trainData){
+		Node* node;
+		node=root;
+		float classResult;
+		while (node!=nullptr){
+			int index=node->featureIndex;
+			float splitValue=node->splitValue;
+			classResult=node->classResult;
+			if (dataRow[index]<=splitValue){
+				node=node->left;
+			}else{
+				node=node->right;
+			}
+		}
+//		for (auto ele:dataRow){
+//			cout<<ele<<' ';
+//		}
+	//	cout<<"Predict result "<<classResult<<endl;
+		if (fabs(classResult-dataRow.back())<=1e-9){
+			count++;
+		}
+	}
+	cout<<"Classification tree->prediction accuracy: "<<100*float(count)/data.trainDataSize<<endl;
+}
+
+
+
+void CART :: Predict(vector<float>& dataRow){
+/******************************************
+*  Input:
+*     explicit:
+*     	1. dataRow;
+*     implicit:
+*       1. root
+*  Output:
+*     void;
+*  Function:
+*     predict the classResult
+*******************************************/
+	Node* node;
+	node=root;
+	float classResult;
+	while (node!=nullptr){
+		int index=node->featureIndex;
+		float splitValue=node->splitValue;
+		classResult=node->classResult;
+		if (dataRow[index]<=splitValue){
+			node=node->left;
+		}else{
+			node=node->right;
+		}		
+	}
+	for (auto ele:dataRow){
+		cout<<ele<<' ';
+	}
+	cout<<classResult<<endl;
+}
+
 
 int CART :: PrintTree(Node* node){
 /******************************************
@@ -131,10 +202,10 @@ int CART :: Split(Node* node){
 *  		1. Update featureIndex, splitValue;
 *  		2. Generate left and right nodes;	
 *******************************************/
-	int classCount;
 	float Gini_index_min=1;
 	unordered_map<float,int> classSet;
 	float score;	
+	int count;
 //
 	for (auto ele:node->dataSet){
 		classSet[ele.back()]++;
@@ -162,7 +233,7 @@ int CART :: Split(Node* node){
 			vector< vector<float> >::iterator it;
 			unordered_map<float,int> classSet_left,classSet_right(classSet);
 			float scoreL=0,scoreR=score;	
-			int count=1;	
+			count=1;	
 			for (it=node->dataSet.begin();it!=node->dataSet.end();it++,count++){
 				splitValue=(*it)[fIndex];
 				// Calculate GiniIndex
@@ -182,13 +253,16 @@ int CART :: Split(Node* node){
 					GiniR=PR*(1.0-scoreR/(node->dataSet.size()-count)/(node->dataSet.size()-count));
 				}
 				Gini_index_tmp=GiniL+GiniR;
+				
 				//cout<<" X "<<splitValue<<" Gini "<<Gini_index_tmp<<endl;
 				//
-				if(Gini_index_tmp<Gini_index_min){
-					Gini_index_min=Gini_index_tmp;
-					node->featureIndex=fIndex;
-					node->splitValue=splitValue;
-					classCount=count;
+				vector< vector<float> >::iterator itp=it+1;
+				if ((it==node->dataSet.end()-1) || (*itp)[fIndex]!=splitValue){
+					if(Gini_index_tmp<Gini_index_min){
+						Gini_index_min=Gini_index_tmp;
+						node->featureIndex=fIndex;
+						node->splitValue=splitValue;
+					}
 				}
 			}
 
@@ -196,11 +270,18 @@ int CART :: Split(Node* node){
 			// for regression tree;	
 		}	
 	}
+//
+	count=0;
+	for (auto ele:node->dataSet){
+		if (ele[node->featureIndex]<=node->splitValue)
+			count++;
+	}
 // Return if the class set could not be reduced
-	if (classCount==node->dataSet.size()){
+	if (count==node->dataSet.size()){
+		node->featureIndex=-1;
 		Calculate_classResult(node,settings.treeType);
 		return 1;
-	}
+	}	
 // Split node
 	node->left=new Node(node->depth+1);				
 	node->right=new Node(node->depth+1);
@@ -346,4 +427,17 @@ void CART :: OutputData(CART_data& data){
 	}
 	fout.close();
 }
+
+void CART :: Configure_Set_depth(int depth){
+/******************************************
+*  Input:
+*     explicit:
+*     	1. depth;
+*  Output:
+*     	void;
+*  Function:
+*     Set the max depth of the decision tree; 
+*******************************************/
+	settings.maxDepth=depth;
+} 
 
