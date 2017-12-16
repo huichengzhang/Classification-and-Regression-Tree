@@ -79,7 +79,7 @@ void CART :: Evaluate(){
 *     cross-validation;
 *******************************************/
 	int count=0;
-	for (auto dataRow:data.trainData){
+	for (auto dataRow:data.testData){
 		Node* node;
 		node=root;
 		float classResult;
@@ -101,7 +101,7 @@ void CART :: Evaluate(){
 			count++;
 		}
 	}
-	cout<<"Classification tree->prediction accuracy: "<<100*float(count)/data.trainDataSize<<endl;
+	cout<<"Classification tree->prediction accuracy: "<<100*float(count)/data.testDataSize<<endl;
 }
 
 
@@ -202,34 +202,43 @@ int CART :: Split(Node* node){
 *  		1. Update featureIndex, splitValue;
 *  		2. Generate left and right nodes;	
 *******************************************/
-	float Gini_index_min=1;
 	unordered_map<float,int> classSet;
-	float score;	
-	int count;
+	float score=0;	
+	int splitCount,count;
 //
-	for (auto ele:node->dataSet){
-		classSet[ele.back()]++;
-	}
-	for (auto ele:classSet){
-		score+=ele.second*ele.second;
-	}	
+	if (settings.treeType==0){
+		for (auto ele:node->dataSet){
+			classSet[ele.back()]++;
+		}
+		for (auto ele:classSet){
+			score+=ele.second*ele.second;
+		}	
 // Return if class pool is homogeneous
-	if (classSet.size()==1){
-		Calculate_classResult(node,settings.treeType);
-		return 1;
+		if (classSet.size()==1){
+			Calculate_classResult(node,settings.treeType);
+			return 1;
+		}
+	}else{
+		for(auto ele:node->dataSet){
+			score+=ele.back();
+		}
 	}
+//
+	float Gini_index_min=1;
+	float variance_min=numeric_limits<float>::max();
 //	
 	for(int fIndex=0;fIndex<data.featureNum;fIndex++){
 		float splitValue;
 		float Gini_index_tmp;
+		float variance_min_tmp;
 	
 		sort(node->dataSet.begin(),node->dataSet.end(),
 		     [fIndex](vector<float> rowi,vector<float> rowj){
 		     return rowi[fIndex]<rowj[fIndex];
 		     }
-		);
-		
+		);		
 		if (settings.treeType==0){
+			// classification tree
 			vector< vector<float> >::iterator it;
 			unordered_map<float,int> classSet_left,classSet_right(classSet);
 			float scoreL=0,scoreR=score;	
@@ -246,38 +255,73 @@ int CART :: Split(Node* node){
 				scoreL+=2*classSet_left[(*it).back()]-1;
 				scoreR-=(2*classSet_right[(*it).back()]+1);
 //		
-				GiniL=PL*(1.0-scoreL/count/count);
-				if (count==node->dataSet.size()){
-					GiniR=0.0;
-				}else{
-					GiniR=PR*(1.0-scoreR/(node->dataSet.size()-count)/(node->dataSet.size()-count));
-				}
-				Gini_index_tmp=GiniL+GiniR;
-				
-				//cout<<" X "<<splitValue<<" Gini "<<Gini_index_tmp<<endl;
+				if ((it==node->dataSet.end()-1) || (*(it+1))[fIndex]!=splitValue){
+					GiniL=PL*(1.0-scoreL/count/count);
+					if (count==node->dataSet.size()){
+						GiniR=0.0;
+					}else{
+						GiniR=PR*(1.0-scoreR/(node->dataSet.size()-count)/(node->dataSet.size()-count));
+					}
+					Gini_index_tmp=GiniL+GiniR;
 				//
-				vector< vector<float> >::iterator itp=it+1;
-				if ((it==node->dataSet.end()-1) || (*itp)[fIndex]!=splitValue){
 					if(Gini_index_tmp<Gini_index_min){
 						Gini_index_min=Gini_index_tmp;
 						node->featureIndex=fIndex;
 						node->splitValue=splitValue;
+						splitCount=count;
 					}
 				}
 			}
 
 		}else{
 			// for regression tree;	
+			vector< vector<float> >::iterator it;
+			float sumL=0,sumR=score;
+			count=1;
+			for (it=node->dataSet.begin();it!=node->dataSet.end();it++,count++){
+				splitValue=(*it)[fIndex];
+				// Calculate GiniIndex
+				float PL,PR;
+				PL=(float)count/float(node->dataSet.size());
+				PR=1.0-PL;
+				// Calculate scoreL and scoreR
+				
+				sumL+=(*it).back();
+				sumR-=(*it).back();
+				//
+				if ((it==node->dataSet.end()-1) || (*(it+1))[fIndex]!=splitValue){
+					float avgL,avgR;
+					float squareErrorL,squareErrorR;
+					avgL=sumL/count;
+					avgR=sumR/(node->dataSet.size()-count);
+					float scoreL=0,scoreR=0;
+					for (vector< vector<float> >::iterator itTmp=node->dataSet.begin();itTmp!=it+1;itTmp++){
+						scoreL+=((*itTmp).back()-avgL)*((*itTmp).back()-avgL);
+					}
+					for (vector< vector<float> >::iterator itTmp=it+1;itTmp!=node->dataSet.end();itTmp++){
+						scoreR+=((*itTmp).back()-avgR)*((*itTmp).back()-avgR);
+					}
+//		
+					squareErrorL=PL*scoreL;
+					if (count==node->dataSet.size()){
+						squareErrorR=0.0;
+					}else{
+						squareErrorR=PR*scoreR;
+					}
+					variance_min_tmp=squareErrorL+squareErrorR;
+				//
+					if(variance_min_tmp<variance_min){
+						variance_min=variance_min_tmp;
+						node->featureIndex=fIndex;
+						node->splitValue=splitValue;
+						splitCount=count;
+					}
+				}
+			}		
 		}	
 	}
-//
-	count=0;
-	for (auto ele:node->dataSet){
-		if (ele[node->featureIndex]<=node->splitValue)
-			count++;
-	}
 // Return if the class set could not be reduced
-	if (count==node->dataSet.size()){
+	if (splitCount==node->dataSet.size()){
 		node->featureIndex=-1;
 		Calculate_classResult(node,settings.treeType);
 		return 1;
@@ -343,6 +387,11 @@ void CART :: Calculate_classResult(Node* node,int treeType){
 		
 	}else{
 		// for regression tree;
+		float avg=0;
+		for (auto ele:node->dataSet){
+			avg+=ele.back();	
+		}
+		node->classResult=avg/node->dataSet.size();
 	}
 }
 

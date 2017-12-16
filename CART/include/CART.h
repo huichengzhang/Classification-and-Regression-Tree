@@ -18,6 +18,7 @@
 #include<unordered_set>
 #include<string>
 #include<math.h>
+#include<limits>
 #include<cstdlib>
 #include<utility>
 #include"Node.h"
@@ -42,11 +43,13 @@ struct CART_settings{
 	float test_ratio;
 	int maxDepth;
 	int minCount;
+// regression tree
 	CART_settings(){
 		treeType=0;
-		test_ratio=0;
-		maxDepth=40;
-		minCount=1;
+		test_ratio=0.2;
+		maxDepth=8;
+		minCount=2;
+//  regression tree
 	}
 };
 
@@ -64,7 +67,7 @@ public:
 	~CART();
 //	void Set_configurations();
 	void Configure_Set_depth(int depth);
-	int Read_sampleFile(string sampleFile);
+	int  Read_sampleFile(string sampleFile);
 	void Learn();
 	void Evaluate();
 	void Predict(vector<float>& dataRow);
@@ -74,7 +77,7 @@ protected:
 	int   BuildTree(Node* node);
 	bool  StopCriterion(Node* node);
 	void  Calculate_classResult(Node* node,int treeType);
-	int   Split(Node* node);
+	int   Split(Node* node);	
 //	int   DeleteTree(Node* node);
 	int   PrintTree(Node* node);
 };
