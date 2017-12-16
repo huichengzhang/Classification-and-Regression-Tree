@@ -8,6 +8,7 @@ The Machine Learning Repository contains source codes for many popular machine l
 - Regression tree (Sum of square error)
 
 ## Run the program
+### Run the CART
 - Copy dataset from  /CART/dataSet_classification  into  /CART/build/apps/data.txt
 - Run  /CART/build/apps/program
 
