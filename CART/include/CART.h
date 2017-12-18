@@ -46,15 +46,15 @@ struct CART_settings{
 // regression tree
 	CART_settings(){
 		treeType=0;
-		test_ratio=0.2;
+		test_ratio=0.1;
 		maxDepth=8;
 		minCount=2;
 //  regression tree
 	}
 };
 
-class CART{
-	
+class CART{	
+
 protected:
 	Node* root;
 // CART data
@@ -72,7 +72,7 @@ public:
 	void Evaluate();
 	void Predict(vector<float>& dataRow);
 	
-protected:
+private:
 	void  OutputData(CART_data& data);
 	int   BuildTree(Node* node);
 	bool  StopCriterion(Node* node);
